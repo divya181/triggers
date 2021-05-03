@@ -1,0 +1,25 @@
+Problem statement : Create a field 'Account owner profile' on Contact.
+*Whenever a contact is created, update the field above with account's owner's profile name using minimum SOQL.
+Also during contact update check if account is updated then update the field accordingly.
+
+***** Trigger ******
+
+trigger accountownerprofile on Contact (before insert,before update) {
+
+    set<id> contactids = new set<id>();
+    for(contact c : trigger.new){
+        
+        contactids.add(c.accountid);
+    }
+    set<id> userids = new set<id>();
+    
+    map<id,account> mapaccount = new map<id,account>([select ownerid, name from account where id in : contactids]);
+    for(account a : mapaccount.values() ){
+        userids.add(a.ownerid);
+    }
+    map<id,user> mapuser = new map<id,user>([select id, name, profile.name from user where id in : userids]);
+    for(contact con : trigger.new){
+        con.Account_owner_profile__c = mapuser.get(mapaccount.get(con.AccountId).ownerid).profile.name;
+    }
+
+}
