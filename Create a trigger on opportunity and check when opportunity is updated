@@ -1,0 +1,44 @@
+Problem statement : Create a trigger on opportunity and check when opportunity is updated to Is Decision Maker, then task should be created under opportunity with below details:
+Task owner - Opp Owner; Task Whoid- Opp Contact; Task Status - In Progress ; Subject - Other
+
+
+**** apex class ****
+
+public class TaskUpdateApex 
+{
+public static void onUpdate(List<Opportunity> opplist)
+{ 
+   set<Id> oppIds= new Set<Id>();
+   for(Opportunity opp:opplist)
+   {
+      oppIds.add(opp.id);
+   }
+  list<Task> tasklist=new list<Task>();
+      List<Opportunity> oppls=[Select name, StageName,OwnerId,contactId,Id  from opportunity where id in:oppIds];
+   for(Opportunity opp:oppls)
+   {
+       if(opp.stageName=='Id. Decision Makers')
+       {  
+           Task ts= new Task(Ownerid = opp.ownerid, Subject='Other', status='In Progress', Whoid = opp.contactId, whatid = opp.Id);
+           tasklist.add(ts);
+       }
+        else if(opp.stageName=='Closed Won')
+       { 
+         for(task ts:[select Ownerid,whatid,status from Task where whatid = :opp.Id limit 1])
+         {
+             ts.Status='Completed';
+              tasklist.add(ts);  
+         }
+        
+       }
+   }
+upsert tasklist;
+}
+}
+
+
+**** trigger *****
+
+trigger ClosedOpportunityTrigger on Opportunity (after update) {
+TaskUpdateApex.onUpdate(Trigger.new);
+}
