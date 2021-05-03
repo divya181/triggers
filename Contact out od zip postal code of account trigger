@@ -1,0 +1,34 @@
+Problem Statement: 
+When a Billing Address is modified, get the new Postal Code. Then check which Contacts on the Account are outside that Postal Code. If 1 or more Contacts are outside of the Postal Code, mark Out_of_Zip as TRUE.
+
+***** APex class *****
+public class Out_of_Zip_Contact {
+    
+     public static void Out_of_Zip( List<Account> updatedAccountList){
+    set<id> accountIds = new set<id>();
+    for(account ac : updatedAccountList){
+        accountIds.add(ac.id);
+    }
+         List<contact> conlist = new List<contact>([select accountid, mailingpostalcode from contact where accountid in : accountids]);
+         for(account a : updatedAccountList){
+             for(contact con : conlist){
+                 if(con.AccountId == a.id){
+                     if(con.MailingPostalCode != a.BillingPostalCode){
+                         a.Out_of_zip__c = true;
+                     }
+                     else{
+                         a.Out_of_zip__c = false;
+                     }
+                 }
+             }
+         }        
+    }
+}
+
+*******  trigger *****
+trigger outofzip on Account (before update) {
+    
+
+      Out_of_Zip_Contact.Out_of_Zip( Trigger.new );
+
+}
